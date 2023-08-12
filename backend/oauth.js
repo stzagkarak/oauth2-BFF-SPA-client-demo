@@ -1,8 +1,7 @@
 const OAUTH_ISSUER_URL = "http://127.0.0.1:4444";
-const CLIENT_ID = "f641fcc3-38b6-4ffc-a408-eb7e82e7abf7";
-const CLIENT_SECRET = "r.oQ2Z1auUK.002ac8kYYwDgIs";
-const REDIRECT_URIS = ["http://localhost:8100/oauth_login_callback"]
-const POST_LOGOUT_REDIRECT_URIS = ["http://localhost:8100/logout_callback"]
+const CLIENT_ID = "696db47f-d323-42fa-8a89-6e813f96e471";
+const CLIENT_SECRET = "NBgIqBMeSE14dlgYQckBgF_wtC";
+const REDIRECT_URIS = ["http://localhost:8100/oauth_callback"]
 
 import { Issuer } from 'openid-client';
 import { generators } from 'openid-client';
@@ -28,8 +27,13 @@ const client = new local_issuer.Client({
 
 export async function refresh_tokens(tokenSet) {
 
-  const r_tokenSet = await client.refresh(tokenSet.refresh_token);
-  return r_tokenSet;
+  try {
+    const r_tokenSet = await client.refresh(tokenSet.refresh_token);
+    return r_tokenSet;
+  }
+  catch(er) {
+    return undefined;
+  }
 
 }
 
@@ -79,7 +83,7 @@ export async function revoke_token(token) {
   }
 }
 
-export async function exchange_code(code_verifier, code, state) {
+export async function exchange_code(code, code_verifier, state) {
 
   const params = { code, state }
   const checks = { code_verifier, state }

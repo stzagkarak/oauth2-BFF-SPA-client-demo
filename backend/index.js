@@ -4,10 +4,9 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import { exchange_code, get_login_redirection_info, get_logout_redirection_info, refresh_tokens, revoke_token } from './oauth.js';
 import cors from 'cors';
-import { new_token, verify_token } from './ptoken.js';
-import { get_entry, new_entry, patch_entry, patch_tokenSet, remove_entry } from './db.js';
 import session from 'express-session';
 import createMemoryStore from "memorystore";
+import { TokenSet } from 'openid-client';
 
 const app = express()
 const port = 8181
@@ -26,205 +25,137 @@ app.use(bodyParser.json())
 // and cookie.secure == "auto"
 app.use(session({
     secret: "demosecretdemosecret",
-    cookie: { 
-        maxAge: 86400000,
-        secure: false,
+    name: "demo",
+    resave: false,
+    saveUninitialized:false,
+    cookie: {
         httpOnly: true,
         sameSite: 'lax'
     },
-    store: new mstore({
-        checkPeriod: 86400000
-    }),
-    saveUninitialized:false,
-    resave: false, 
-    name: "demo"
+    store: new mstore()
 }));
 
 // REQUEST SESSION URI
 
-app.post('/session/new', async (req, res) => {
-    console.log("POST /session/new")
+app.post("/session/new", async (req, res) => {
 
-    let entry_info = {}
+    console.log("POST on /session/new")
+    console.log(req.session.tokenSet);
 
-    // client may have issued tokens, try to refresh them
-    if(req.headers.authorization) {
-        // case token exists
-        const jwt = req.headers.authorization.split(' ')[1];
-        const payload = verify_token(jwt);
-        entry_info = get_entry(payload.uuid);
+    if(req.session.tokenSet) {
         
-    }
+        const tokenSet = new TokenSet(req.session.tokenSet);
 
-    if(entry_info && entry_info.status == "tokens" && entry_info.tokenSet) {
-
-        let r_f = false;
-        if(entry_info.tokenSet.expired()) {
-            console.log("-- try refresh")
-            try {
-                const new_tokenSet = refresh_tokens(entry_info.tokenSet);
-                patch_tokenSet(entry_info.uuid, new_tokenSet)
-                console.log("refreshed")
-            }
-            catch(er) {
-                console.log("refresh tokens expired")
-                r_f = true;
-            }
+        if(tokenSet.expired()) {
+            
+            const resp = await try_refresh_session(req, res);
+            req.session.tokenSet = resp; // may be undefined but it is desired
+            
+            if(resp == 1) return res.status(200).send({
+                redirect_required: false
+            })            
         }
-        if(!r_f) {
+        else {
+            // session is valid
             return res.status(200).send({
-                redirect_required: false,
-                token_valid: true            
-            })    
+                redirect_required: false
+            });
         }
     }
 
-    const [uri, state, code_verifier] = get_login_redirection_info();
-    const [token, uuid] = new_token(); // create new jwt to hold uuid
-    new_entry(uuid, code_verifier, state); // save uuid info in db
+    const [red_uri, state, ch_ver ] = get_login_redirection_info()
+
+    req.session.ch_ver = ch_ver;
+    req.session.state = state;
 
     return res.status(200).send({
         redirect_required: true,
-        redirect_to: uri,
-        state: state,
-        platform_token: token
-    })    
-    
+        redirect_to: red_uri
+    })
 })
+
+async function try_refresh_session(req, res) {
+    console.log("Try Refresh tokenSet")
+    const new_tokenSet = await refresh_tokens(req.session.tokenSet);
+
+    if(new_tokenSet == undefined) {
+        console.log("Could not refresh tokenSet")
+        return undefined;
+    }    
+    
+    console.log("Tokens Refreshed");
+    return new_tokenSet;
+}
 
 app.post("/session/upgrade", async (req, res) => {
-    console.log("POST /session/upgrade")
-    //if(req.session.tokenSet) {
-    //    
-    //}
 
-    if(!req.headers.authorization) {
-        return res.status(400).send({reason: "No platform token"});
+    console.log("POST on /session/upgrade");
+
+    if(req.session.ch_ver && req.session.state 
+        && req.body && req.body.code && req.body.scope 
+            && req.body.state && req.body.state == req.session.state) {
+        
+        const tokenSet = await exchange_code(req.body.code, 
+            req.session.ch_ver, req.session.state )
+        
+        const id_claims = tokenSet.claims();
+
+        req.session.tokenSet = tokenSet;
+        req.session.sub = id_claims.sub;
+
+        return res.send({state: "success"})
     }
 
-    
-    const jwt = req.headers.authorization.split(' ')[1];
-    const jwt_payload = verify_token(jwt);
-    const entry_info = get_entry(jwt_payload.uuid);
-    
-    // check if entry_info is in redirect state
-    if(entry_info && entry_info.status == "tokens") {
-        return res.status(200).send({
-            status: "success"
-        })
-    }
-
-    const state = entry_info.state;
-    const code_verifier = entry_info.code_verifier;
-
-    const body = req.body;
-    console.log(body);
-
-    if(!body && !body.code && !body.scope && !body.state) {
-        return res.status(400).send({reason: "Invalid Body"})
-    }
-    if(body.state != state) {
-        return res.status(400).send({reason: "State Missmatch"})
-    }
-
-    const tokenSet = await exchange_code(
-        code_verifier,
-        body.code,
-        state
-    );
-
-    //console.log(tokenSet)
-    const claims = tokenSet.claims()
-    patch_entry(jwt_payload.uuid, tokenSet, claims.sub);
-
-    return res.send({status: "success"});
-
-    //const tokenSet = 
-})
-
-app.post("/session/end", async (req, res) => {
-
-    if(!req.headers.authorization) {
-        return res.status(400).send({reason: "No platform token"});
-    }
-
-    const jwt = req.headers.authorization.split(' ')[1];
-    const jwt_payload = verify_token(jwt);
-    const entry_info = get_entry(jwt_payload.uuid);
-    
-    if(entry_info.status != "tokens") {
-        return res.status(400).send({reason: "Not Logged In"});
-    }
-    
-    remove_entry(entry_info.uuid);
-    res.send({
-        redirect_required: false, 
-        invalidate_token: true
-    });
+    return res.status(400).send({state: "error", reason: "Invalid Body"});
 
 })
 
-app.post("/test", async (req, res) => {
+app.get("/protected_item", async (req, res) => {
 
-    if(!req.headers.authorization) {
-        res.status(404).send({reason: "No Platform Token in Authorization Header"})
+    console.log("GET /protected_item")
+
+    if(req.session.sub && req.session.tokenSet) {
+
+        const tokenSet = new TokenSet(req.session.tokenSet);
+
+        if(tokenSet.expired()) {
+            // refresh 
+            const resp = await try_refresh_session(req, res);
+            req.session.tokenSet = resp; // may be undefined but it is desired
+            if(resp == undefined) return res.status(404).send({state: "Expired Session"})
+        }
+        
+        return res.send({sub: req.session.sub});
     }
 
-    const jwt = req.headers.authorization.split(' ')[1]
-    const payload = verify_token(jwt)
+    return res.status(404).send({state: "No Active Session"});
+})
 
-    if(!payload) {
-        //next()
-        return res.status(400).send({
-            reason: "Invalid Platform Token in Authorization Header", 
-            ins: {
-                invalidate_token: true,
-                redirect_required: true,
-                redirect_to: "http://localhost:8100/" // login page
-            }
-        }) 
-    }
+app.post("/session/clear", async (req, res) => {
 
-    const entry_info = get_entry(payload.uuid);
-    console.log(entry_info)
-    if(!entry_info || !entry_info.tokenSet) {
-        return res.status(400).send({
-            reason: "Invalid Session", 
-            ins: {
-                invalidate_token: true,
-                redirect_required: true,
-                redirect_to: "http://localhost:8100/" // login page
-            }
-        })      
-    }
+    console.log("POST on /session/clear");
 
-    if(entry_info.tokenSet.expired()) {
-        return res.status(404).send({
-            reason: "Expired Session", 
-            ins: {
-                invalidate_token: true,
-                redirect_required: true,
-                redirect_to: "http://localhost:8100/" // login page
-            }
-        }) 
-    }
-
-
-    return res.status(200).send({bar: "baz"})
+    req.session.destroy(function(err) {
+        console.log(err)
+        console.log("Cleared Session")
+    })
+    
+    return res.status(200).send({status: "success"});
 })
 
 app.post("/test_session", (req, res) => {
 
-    if(!req.session.counter) {
-        req.session.counter = 1;
-    }
-    else {
-        req.session.count += 1;
-    }
-
-    console.log(req.session.counter)
-    return res.send({status: "ok"});
+    req.session.counter++;
+    console.log("F1 " + req.session.counter)
+    return res.send({status: "1"});
 })
+
+//app.post("/test_session/2", (req, res) => {
+//
+//    req.session.counter++;
+//    console.log("F2 " + req.session.counter)
+//    return res.send({status: "2"});
+//})
 
 app.listen(port, () => {
     console.log(`Backend app listening on port ${port}`)

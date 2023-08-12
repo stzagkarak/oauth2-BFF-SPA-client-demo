@@ -6,9 +6,10 @@ html(lang="en")
         script(src="handler.js" defer) 
     body 
         h2 Hello from sample application!
-        button(onclick="initLogin()") Login 
-        button(onclick="test_session()") Test Session 
-        p(id="token_valid_text")
-        button(id="main_page_button", 
+        button(onclick="init_login()") Login 
+        button(onclick="test_session()") Get Protected Resource 
+        //button(onclick="test_session2()") Test Session 2
+        //p(id="token_valid_text")
+        //button(id="main_page_button", 
             style="visibility: hidden;",
             onclick="window.location='http://localhost:8100/main'") Main Page

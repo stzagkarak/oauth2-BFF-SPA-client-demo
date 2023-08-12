@@ -8,6 +8,8 @@ html(lang="en")
          init_callback(!{JSON.stringify(queries)}) 
     body 
         h2 Hello from login callback!
-        button(onclick="window.location=`/`") Main Page 
+        h5(id="login_status") 
+        p(id="token_info")
         button(onclick="init_logout()") Logout 
+        button(onclick="window.location='http://localhost:8100/main'") Main Page 
 

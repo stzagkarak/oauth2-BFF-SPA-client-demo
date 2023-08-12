@@ -15,6 +15,26 @@ app.get('/', (req, res) => {
     })
 })
 
+app.get("/oauth_callback", (req, res) => {
+
+    console.log("GET /oauth_callback")
+
+    res.render("oauth_callback.pug", {
+        title: "OAuth Callback",
+        queries: req.query      
+    })
+})
+
+app.get("/login_callback", (req, res) => {
+
+    console.log("GET /login_callback")
+    
+    res.render("login_callback.pug", {
+        title: "Login Callback",
+        queries: req.query
+    })
+})
+
 //app.post('/', async (req, res) => {
 //    console.log("POST /")
 //
@@ -43,32 +63,32 @@ app.get('/', (req, res) => {
 ///}
 
 
-app.get("/oauth_login_callback", async (req, res)=> {
-    console.log("GET /oauth_login_callback")
-    console.log(req.query)
-
-    // something can be rendered here, like a logo
-    res.render('login_callback.pug', {
-        title: "Login Callback",
-        queries: req.query
-    })
-})
-
-app.get('/logout_callback', (req, res) => {
-    console.log("GET /")
-    
-    res.render('logout_callback.pug', {
-        title: 'Logout Callback'
-    })
-})
-
-app.get('/main', (req, res) => {
-    console.log("GET /")
-    
-    res.render('main.pug', {
-        title: 'Main Page'
-    })
-})
+//app.get("/oauth_login_callback", async (req, res)=> {
+//    console.log("GET /oauth_login_callback")
+//    console.log(req.query)
+//
+//    // something can be rendered here, like a logo
+//    res.render('login_callback.pug', {
+//        title: "Login Callback",
+//        queries: req.query
+//    })
+//})
+//
+//app.get('/logout_callback', (req, res) => {
+//    console.log("GET /")
+//    
+//    res.render('logout_callback.pug', {
+//        title: 'Logout Callback'
+//    })
+//})
+//
+//app.get('/main', (req, res) => {
+//    console.log("GET /")
+//    
+//    res.render('main.pug', {
+//        title: 'Main Page'
+//    })
+//})
 
 //app.post("/test_session", async (req, res) => {
 //

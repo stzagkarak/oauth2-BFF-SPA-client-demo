@@ -1,0 +1,9 @@
+html(lang="en")
+    head
+        meta(charset="UTF-8")
+        meta(name="viewport", content="width=device-width, initial-scale=1.0")
+        title #{title}
+        script.
+            window.location="/login_callback?code=#{queries.code}&scope=#{queries.scope}&state=#{queries.state}"
+    body 
+        h2 Hello from oauth callback! Logging In...
