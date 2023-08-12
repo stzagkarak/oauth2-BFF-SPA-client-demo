@@ -1,0 +1,10 @@
+//- DO NOT revoke tokens ( logout flow or just delete them from backend )
+    revoke endpoint revokes all tokens for specific client meaning 
+    that other tokens issued for the same sub will also be  
+    invalidated.
+//- Implement the logout flow just to make sure it works. 
+    Open the window in new tab so that post_logout_uri 
+    is sent to the backend server. After redirecting there. 
+//- Manage client status using status keyword.
+//- Refresh token if state = tokens only if access token expired ( tokenSet.expired() ).
+- Proper body checking and error handling.

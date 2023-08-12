@@ -1,0 +1,15 @@
+html(lang="en")
+    head
+        meta(charset="UTF-8")
+        meta(name="viewport", content="width=device-width, initial-scale=1.0")
+        title #{title}
+        script(src="login_callback_hanlder.js") 
+        script.
+         init_callback(!{JSON.stringify(queries)}) 
+    body 
+        h2 Hello from login callback!
+        h5(id="login_status") 
+        p(id="token_info")
+        button(onclick="init_logout()") Logout 
+        button(onclick="window.location='http://localhost:8100/main'") Main Page 
+

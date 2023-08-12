@@ -1,0 +1,13 @@
+html(lang="en")
+    head
+        meta(charset="UTF-8")
+        meta(name="viewport", content="width=device-width, initial-scale=1.0")
+        title #{title}
+        script(src="handler.js" defer) 
+    body 
+        h2 Hello from sample application!
+        button(onclick="initLogin()") Login 
+        p(id="token_valid_text")
+        button(id="main_page_button", 
+            style="visibility: hidden;",
+            onclick="window.location='http://localhost:8100/main'") Main Page
