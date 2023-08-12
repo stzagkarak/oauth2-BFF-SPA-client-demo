@@ -1,6 +1,6 @@
 const OAUTH_ISSUER_URL = "http://127.0.0.1:4444";
-const CLIENT_ID = "f93bb281-f0ac-4149-a635-d92830d213f3";
-const CLIENT_SECRET = "CVPU_8LDATzPsr1_pyrBbJ-1Ur";
+const CLIENT_ID = "f641fcc3-38b6-4ffc-a408-eb7e82e7abf7";
+const CLIENT_SECRET = "r.oQ2Z1auUK.002ac8kYYwDgIs";
 const REDIRECT_URIS = ["http://localhost:8100/oauth_login_callback"]
 const POST_LOGOUT_REDIRECT_URIS = ["http://localhost:8100/logout_callback"]
 

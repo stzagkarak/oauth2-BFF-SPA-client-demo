@@ -17,7 +17,7 @@ async function initLogin() {
     }
     else if(res_body.token_valid) {
         document.getElementById("token_valid_text")
-            .innerText = "Platform token is valid, no need to login";
+            .innerText = "Platform token is valid, no need to execute authorization flow";
         document.getElementById("main_page_button")
             .style.visibility = "visible";
     }
@@ -41,6 +41,25 @@ async function fetch_session(jwt) {
     }
 
     const json = await response.json();
+    return json;
+}
+
+async function test_session() {
+
+    console.log("Testing Session")
+
+    const res = await fetch_session();
+    console.log(res)
+}
+
+async function fetch_session() {
+    
+    const response = await fetch("http://localhost:8181/test_session", {
+        method: "POST",
+        credentials: "include"
+    })
+
+    const json = await response.json()
     return json;
 }
 

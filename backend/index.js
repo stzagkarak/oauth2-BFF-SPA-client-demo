@@ -6,37 +6,39 @@ import { exchange_code, get_login_redirection_info, get_logout_redirection_info,
 import cors from 'cors';
 import { new_token, verify_token } from './ptoken.js';
 import { get_entry, new_entry, patch_entry, patch_tokenSet, remove_entry } from './db.js';
-//import session from 'express-session';
-//import memorystore from "memorystore";
+import session from 'express-session';
+import createMemoryStore from "memorystore";
 
 const app = express()
 const port = 8181
 
-//const mstore = memorystore(session)
+const mstore = createMemoryStore(session)
 
 app.use(cors({
-    //origin: 'http://localhost:8100',
-    methods: ["POST", "GET"],
-    //credentials: true
+    origin: 'http://localhost:8100',
+    //methods: ["POST", "GET"],
+    credentials: true
 }))
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 
 // in production, use app.set("trust proxy",1) 
 // and cookie.secure == "auto"
-//app.use(session({
-//    secret: "demosecretdemosecret",
-//    cookie: { 
-//        maxAge: 86400000,
-//        secure: false,
-//        sameSite: 'lax'
-//    },
-//    store: new mstore({
-//        checkPeriod: 86400000
-//    }),
-//    saveUninitialized:false,
-//    resave: false
-//}));
+app.use(session({
+    secret: "demosecretdemosecret",
+    cookie: { 
+        maxAge: 86400000,
+        secure: false,
+        httpOnly: true,
+        sameSite: 'lax'
+    },
+    store: new mstore({
+        checkPeriod: 86400000
+    }),
+    saveUninitialized:false,
+    resave: false, 
+    name: "demo"
+}));
 
 // REQUEST SESSION URI
 
@@ -209,6 +211,19 @@ app.post("/test", async (req, res) => {
 
 
     return res.status(200).send({bar: "baz"})
+})
+
+app.post("/test_session", (req, res) => {
+
+    if(!req.session.counter) {
+        req.session.counter = 1;
+    }
+    else {
+        req.session.count += 1;
+    }
+
+    console.log(req.session.counter)
+    return res.send({status: "ok"});
 })
 
 app.listen(port, () => {

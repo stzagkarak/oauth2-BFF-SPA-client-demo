@@ -70,6 +70,23 @@ app.get('/main', (req, res) => {
     })
 })
 
+//app.post("/test_session", async (req, res) => {
+//
+//    const r = await fetch_session();
+//    return res.send(r);
+//})
+
+//async function fetch_session() {
+//    
+//    const response = await fetch("http://localhost:8181/test_session", {
+//        method: "POST",
+//        credentials: "include"
+//    })
+//
+//    const json = await response.json()
+//    return json;
+//}
+
 //app.post("/oauth_login_callback", async (req, res) => {
 //    console.log("POST /oauth_login_callback")
 //    // called when login is called
