@@ -1,0 +1,12 @@
+html(lang="en")
+    head
+        meta(charset="UTF-8")
+        meta(name="viewport", content="width=device-width, initial-scale=1.0")
+        title #{title}
+        script(src="main_page_handler.js" defer) 
+    body 
+        h2 This is the main page of the application.
+        p(id="status_text")
+        button(onclick="try_get_resource()") Request Resource 
+        p(id="resp_text")
+        button(onclick="window.location='http://localhost:8100/'") Login Page
